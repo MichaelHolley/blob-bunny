@@ -1,5 +1,7 @@
 import { SQLiteMetadataAdapter } from "./src/infrastructure/metadata/SQLiteMetadataAdapter";
 
+const BASE_URL = import.meta.env.BASE_URL || "http://localhost:3000";
+
 const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
 
 const server = Bun.serve({
@@ -13,22 +15,41 @@ const server = Bun.serve({
       },
       POST: async (req) => {
         // Upload new blob
-        return new Response("Not implemented", { status: 501 }); // TODO: implement upload logic
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
+        Bun.write(`./blob-data/${file.name}`, file);
+
+        metadataAdapter.save({
+          path: `/blob-data/${file.name}`,
+          contentType: file.type,
+          size: file.size,
+        }); // TODO: replace with service
+
+        return Response.json({ url: `${BASE_URL}/blob-data/${file.name}` }); // TODO: implement upload logic
       },
     },
-    "/:path": {
+    "/*": {
       GET: async (req) => {
         // Retrieve blob at params.path
-        const blob = await metadataAdapter.getByPath(req.params.path); // TODO: replace with service
+        const path = req.url.replace(BASE_URL, "");
+        const blob = await metadataAdapter.getByPath(path); // TODO: replace with service
         if (!blob) {
           return new Response("Not found", { status: 404 });
         }
 
-        return Response.json(blob);
+        console.log(blob);
+
+        return new Response(Bun.file(`.${blob.path}`), {
+          headers: {
+            "Content-Type": blob.contentType,
+            "Content-Length": blob.size.toString(),
+          },
+        });
       },
       DELETE: async (req) => {
         // Delete blob at params.path
-        await metadataAdapter.deleteByPath(req.params.path); // TODO: replace with service
+        const path = req.url.replace(BASE_URL, "");
+        await metadataAdapter.deleteByPath(path); // TODO: replace with service
         return new Response("Deleted", { status: 200 });
       },
     },

@@ -14,15 +14,14 @@ export class SQLiteMetadataAdapter implements MetadataAdapter {
   private migrate() {
     this.db.run(`
       CREATE TABLE IF NOT EXISTS blobs (
-        id TEXT PRIMARY KEY,
-        pathname TEXT UNIQUE NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT UNIQUE NOT NULL,
         content_type TEXT,
         size INTEGER,
-        uploaded_at TEXT,
-        url TEXT
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    this.db.run(`CREATE INDEX IF NOT EXISTS idx_pathname ON blobs(pathname)`);
+    this.db.run(`CREATE INDEX IF NOT EXISTS idx_path ON blobs(path)`);
   }
   async list(): Promise<BlobMetadata[]> {
     const rows = this.db.query("SELECT * FROM blobs").all();
@@ -30,31 +29,24 @@ export class SQLiteMetadataAdapter implements MetadataAdapter {
   }
 
   async getByPath(path: string): Promise<BlobMetadata | null> {
-    const row = this.db
-      .query("SELECT * FROM blobs WHERE pathname = ?")
-      .get(path);
+    const row = this.db.query("SELECT * FROM blobs WHERE path = ?").get(path);
 
     if (!row) return null;
 
     return row ? (row as BlobMetadata) : null;
   }
 
-  async save(blob: BlobMetadata): Promise<void> {
+  async save(blob: CreateMetadataBlob): Promise<void> {
     this.db.run(
-      `INSERT OR REPLACE INTO blobs (id, pathname, content_type, size, uploaded_at, url)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        blob.id,
-        blob.pathname,
-        blob.contentType,
-        blob.size,
-        blob.uploadedAt.toISOString(),
-        blob.url,
-      ],
+      `INSERT OR REPLACE INTO blobs (path, content_type, size)
+       VALUES (?, ?, ?)`,
+      [blob.path, blob.contentType, blob.size],
     );
   }
 
   async deleteByPath(path: string): Promise<void> {
-    this.db.run("DELETE FROM blobs WHERE pathname = ?", [path]);
+    this.db.run("DELETE FROM blobs WHERE path = ?", [path]);
   }
 }
+
+type CreateMetadataBlob = Pick<BlobMetadata, "path" | "contentType" | "size">;
