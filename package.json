@@ -1,13 +1,19 @@
 {
   "name": "blob-bunny",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "module": "index.ts",
   "scripts": {
-    "dev": "bun --hot index.ts"
+    "dev": "bun --hot index.ts",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "oxfmt": "^0.26.0",
+    "oxlint": "^1.41.0"
   },
   "peerDependencies": {
     "typescript": "^5"
