@@ -1,8 +1,8 @@
 import { SQLiteMetadataAdapter } from "./src/infrastructure/metadata/SQLiteMetadataAdapter";
 
-const BASE_URL = import.meta.env.BASE_URL || "http://localhost:3000";
-
 const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
+
+const BLOB_DATA_DIR = "./blob-data";
 
 const server = Bun.serve({
   port: 3000,
@@ -10,36 +10,37 @@ const server = Bun.serve({
     "/api/blobs": {
       GET: async () => {
         // Get list of blobs
-        const blobs = await metadataAdapter.list(); // TODO: replace with service
+        const blobs = await metadataAdapter.list();
         return Response.json(blobs);
       },
+    },
+    "/*": {
       POST: async (req) => {
         // Upload new blob
         const formData = await req.formData();
         const file = formData.get("file") as File;
-        Bun.write(`./blob-data/${file.name}`, file);
+        const pathname = new URL(req.url).pathname;
 
+        const writeTo = `${BLOB_DATA_DIR}${pathname}`;
+        console.log(`Saving file to ${writeTo}`);
+        await Bun.write(writeTo, file);
         metadataAdapter.save({
-          path: `/blob-data/${file.name}`,
+          pathname,
           contentType: file.type,
           size: file.size,
-        }); // TODO: replace with service
+        });
 
-        return Response.json({ url: `${BASE_URL}/blob-data/${file.name}` }); // TODO: implement upload logic
+        return new Response("Uploaded", { status: 201 });
       },
-    },
-    "/*": {
       GET: async (req) => {
-        // Retrieve blob at params.path
-        const path = req.url.replace(BASE_URL, "");
-        const blob = await metadataAdapter.getByPath(path); // TODO: replace with service
+        // Get blob
+        const pathname = new URL(req.url).pathname;
+        const blob = await metadataAdapter.getByPathname(pathname);
         if (!blob) {
           return new Response("Not found", { status: 404 });
         }
 
-        console.log(blob);
-
-        return new Response(Bun.file(`.${blob.path}`), {
+        return new Response(Bun.file(`${BLOB_DATA_DIR}${blob.pathname}`), {
           headers: {
             "Content-Type": blob.contentType,
             "Content-Length": blob.size.toString(),
@@ -47,9 +48,20 @@ const server = Bun.serve({
         });
       },
       DELETE: async (req) => {
-        // Delete blob at params.path
-        const path = req.url.replace(BASE_URL, "");
-        await metadataAdapter.deleteByPath(path); // TODO: replace with service
+        // Delete blob
+        const pathname = new URL(req.url).pathname;
+        await metadataAdapter.deleteByPathname(pathname);
+
+        const deleteAt = `${BLOB_DATA_DIR}${pathname}`;
+        const file = Bun.file(deleteAt);
+
+        const fileExists = await file.exists();
+        if (!fileExists) {
+          return new Response("Not found", { status: 404 });
+        }
+
+        await file.delete();
+
         return new Response("Deleted", { status: 200 });
       },
     },

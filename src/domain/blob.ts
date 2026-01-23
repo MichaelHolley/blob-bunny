@@ -1,6 +1,6 @@
 export interface BlobMetadata {
   id: string;
-  path: string;
+  pathname: string;
   contentType: string;
   size: number;
   uploadedAt: Date;
