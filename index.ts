@@ -50,6 +50,12 @@ const server = Bun.serve({
       DELETE: async (req) => {
         // Delete blob
         const pathname = new URL(req.url).pathname;
+
+        const blob = await metadataAdapter.getByPathname(pathname);
+        if (!blob) {
+          return new Response("Not found", { status: 404 });
+        }
+
         await metadataAdapter.deleteByPathname(pathname);
 
         const deleteAt = `${BLOB_DATA_DIR}${pathname}`;
