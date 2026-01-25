@@ -4,8 +4,8 @@
   "type": "module",
   "module": "index.ts",
   "scripts": {
-    "dev": "bun --hot index.ts",
-    "build": "bun build index.ts --outdir=./dist --target=bun",
+    "dev": "bun run --hot src/index.ts",
+    "build": "bun build src/index.ts --outdir=./dist --target=bun",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
@@ -18,5 +18,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "hono": "^4.11.5"
   }
 }
