@@ -2,8 +2,7 @@
 import { Database } from "bun:sqlite";
 import type { MetadataAdapter } from "./IMetadataAdapter";
 import type { BlobMetadata } from "../../domain/blob";
-
-type CreateMetadataBlob = Pick<BlobMetadata, "pathname" | "contentType" | "size">;
+import type { CreateMetadataBlob } from "./types";
 
 export class SQLiteMetadataAdapter implements MetadataAdapter {
   private db: Database;
