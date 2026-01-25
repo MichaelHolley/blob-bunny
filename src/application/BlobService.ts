@@ -11,7 +11,7 @@ export class BlobService {
 
   constructor(
     private metadataAdapter: MetadataAdapter,
-    blobDataDir: string = "./blob-data",
+    blobDataDir: string,
   ) {
     this.blobDataDir = blobDataDir;
   }

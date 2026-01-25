@@ -3,18 +3,23 @@ import { bearerAuth } from "hono/bearer-auth";
 import { BlobService } from "./application/BlobService";
 import { SQLiteMetadataAdapter } from "./infrastructure/metadata/SQLiteMetadataAdapter";
 
-const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
-const blobService = new BlobService(metadataAdapter, "./blob-data");
+const TOKEN = Bun.env.BLOB_BUNNY_API_TOKEN;
+const DATA_DIR = Bun.env.BLOB_BUNNY_DATA_DIR;
 
-const app = new Hono();
-
-const token = Bun.env.BLOB_BUNNY_API_TOKEN;
-
-if (!token) {
+if (!TOKEN) {
   throw new Error("BLOB_BUNNY_API_TOKEN environment variable is not set");
 }
 
-app.use("*", bearerAuth({ token }));
+if (!DATA_DIR) {
+  throw new Error("BLOB_BUNNY_DATA_DIR environment variable is not set");
+}
+
+const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
+const blobService = new BlobService(metadataAdapter, DATA_DIR);
+
+const app = new Hono();
+
+app.use("*", bearerAuth({ token: TOKEN }));
 
 // List all blobs
 app.get("/api/blobs", async (c) => {
