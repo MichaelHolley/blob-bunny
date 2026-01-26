@@ -1,6 +1,7 @@
 import { join, relative, resolve } from "path";
 import type { BlobMetadata } from "../domain/blob";
 import type { MetadataAdapter } from "../infrastructure/metadata/IMetadataAdapter";
+import { getDataDir, getMaxFileSize } from "../infrastructure/config";
 
 export interface BlobUploadOptions {
   pathname: string;
@@ -9,12 +10,11 @@ export interface BlobUploadOptions {
 
 export class BlobService {
   private blobDataDir: string;
+  private maxFileSize: number;
 
-  constructor(
-    private metadataAdapter: MetadataAdapter,
-    blobDataDir: string,
-  ) {
-    this.blobDataDir = resolve(blobDataDir);
+  constructor(private metadataAdapter: MetadataAdapter) {
+    this.blobDataDir = getDataDir();
+    this.maxFileSize = getMaxFileSize();
   }
 
   /**
@@ -117,6 +117,12 @@ export class BlobService {
 
   async upload(options: BlobUploadOptions): Promise<void> {
     const { pathname, file } = options;
+
+    // Validate file size
+    if (file.size > this.maxFileSize) {
+      throw new Error(`File too large: exceeds maximum allowed size of ${this.maxFileSize} bytes`);
+    }
+
     const writeTo = this.sanitizePath(pathname);
 
     console.log(`Saving file to ${writeTo}`);

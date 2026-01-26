@@ -3,24 +3,14 @@ import { bearerAuth } from "hono/bearer-auth";
 import { BlobService } from "./application/BlobService";
 import { SQLiteMetadataAdapter } from "./infrastructure/metadata/SQLiteMetadataAdapter";
 import { HTTPException } from "hono/http-exception";
-
-const TOKEN = Bun.env.BLOB_BUNNY_API_TOKEN;
-const DATA_DIR = Bun.env.BLOB_BUNNY_DATA_DIR;
-
-if (!TOKEN) {
-  throw new Error("BLOB_BUNNY_API_TOKEN environment variable is not set");
-}
-
-if (!DATA_DIR) {
-  throw new Error("BLOB_BUNNY_DATA_DIR environment variable is not set");
-}
+import { getApiToken } from "./infrastructure/config";
 
 const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
-const blobService = new BlobService(metadataAdapter, DATA_DIR);
+const blobService = new BlobService(metadataAdapter);
 
 const app = new Hono();
 
-app.use("*", bearerAuth({ token: TOKEN }));
+app.use("*", bearerAuth({ token: getApiToken() }));
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
