@@ -18,11 +18,84 @@ export class BlobService {
   }
 
   /**
+   * Validates pathname input to prevent various attack vectors.
+   * @throws Error if validation fails
+   */
+  private validatePathname(pathname: string): void {
+    // Check for null/undefined/empty
+    if (!pathname || typeof pathname !== "string") {
+      throw new Error("Invalid path: pathname is required and must be a string");
+    }
+
+    // Trim the pathname
+    const trimmed = pathname.trim();
+
+    // Check for directory traversal patterns BEFORE stripping slashes
+    if (trimmed.includes("..")) {
+      throw new Error("Invalid path: directory traversal patterns (..) are not allowed");
+    }
+
+    // Remove leading slashes for further validation
+    const cleaned = trimmed.replace(/^\/+/, "");
+
+    // Check minimum length after removing leading slashes
+    if (cleaned.length === 0) {
+      throw new Error("Invalid path: pathname cannot be empty");
+    }
+
+    // Check maximum length (255 characters is standard filesystem limit)
+    if (cleaned.length > 255) {
+      throw new Error(
+        `Invalid path: pathname too long (max 255 characters, got ${cleaned.length})`,
+      );
+    }
+
+    // Block hidden files (starting with dot after path separators)
+    const pathParts = cleaned.split("/");
+    for (const part of pathParts) {
+      if (part.startsWith(".")) {
+        throw new Error("Invalid path: hidden files/directories (starting with .) are not allowed");
+      }
+    }
+
+    // Block null bytes and control characters
+    if (/[\x00-\x1F\x7F]/.test(cleaned)) {
+      throw new Error(
+        "Invalid path: null bytes and control characters are not allowed",
+      );
+    }
+
+    // Validate allowed characters (alphanumeric, dash, underscore, dot, forward slash)
+    const allowedCharsRegex = /^[a-zA-Z0-9._\-\/]+$/;
+    if (!allowedCharsRegex.test(cleaned)) {
+      throw new Error(
+        "Invalid path: only alphanumeric characters, dash, underscore, dot, and forward slash are allowed",
+      );
+    }
+
+    // Validate file extension exists and is reasonable
+    const filename = pathParts[pathParts.length - 1];
+
+    if (!filename || !filename.includes(".")) {
+      throw new Error("Invalid path: filename must have an extension");
+    }
+
+    const extensionParts = filename.split(".");
+    const extension = extensionParts[extensionParts.length - 1];
+    if (!extension || extension.length === 0 || extension.length > 10) {
+      throw new Error("Invalid path: file extension is invalid or too long");
+    }
+  }
+
+  /**
    * Sanitizes a pathname to prevent directory traversal attacks.
    * Ensures the resolved path stays within the blob data directory.
    * @throws Error if path traversal is detected
    */
   private sanitizePath(pathname: string): string {
+    // Validate input first
+    this.validatePathname(pathname);
+
     // Remove leading slashes
     const cleaned = pathname.replace(/^\/+/, "");
 
