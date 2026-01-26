@@ -1,5 +1,6 @@
-import type { MetadataAdapter } from "../infrastructure/metadata/IMetadataAdapter";
+import { join, relative, resolve } from "path";
 import type { BlobMetadata } from "../domain/blob";
+import type { MetadataAdapter } from "../infrastructure/metadata/IMetadataAdapter";
 
 export interface BlobUploadOptions {
   pathname: string;
@@ -13,7 +14,30 @@ export class BlobService {
     private metadataAdapter: MetadataAdapter,
     blobDataDir: string,
   ) {
-    this.blobDataDir = blobDataDir;
+    this.blobDataDir = resolve(blobDataDir);
+  }
+
+  /**
+   * Sanitizes a pathname to prevent directory traversal attacks.
+   * Ensures the resolved path stays within the blob data directory.
+   * @throws Error if path traversal is detected
+   */
+  private sanitizePath(pathname: string): string {
+    // Remove leading slashes
+    const cleaned = pathname.replace(/^\/+/, "");
+
+    // Resolve the full path
+    const fullPath = resolve(join(this.blobDataDir, cleaned));
+
+    // Verify the path stays within the base directory
+    const relativePath = relative(this.blobDataDir, fullPath);
+
+    // Check for directory traversal attempts
+    if (relativePath.startsWith("..") || resolve(relativePath) === relativePath) {
+      throw new Error(`Invalid path: directory traversal detected in "${pathname}"`);
+    }
+
+    return fullPath;
   }
 
   async list(): Promise<BlobMetadata[]> {
@@ -22,7 +46,7 @@ export class BlobService {
 
   async upload(options: BlobUploadOptions): Promise<void> {
     const { pathname, file } = options;
-    const writeTo = `${this.blobDataDir}${pathname}`;
+    const writeTo = this.sanitizePath(pathname);
 
     console.log(`Saving file to ${writeTo}`);
     await Bun.write(writeTo, file);
@@ -42,7 +66,8 @@ export class BlobService {
       return null;
     }
 
-    const file = Bun.file(`${this.blobDataDir}${blob.pathname}`);
+    const sanitizedPath = this.sanitizePath(blob.pathname);
+    const file = Bun.file(sanitizedPath);
     return { file, metadata: blob };
   }
 
@@ -54,7 +79,7 @@ export class BlobService {
 
     await this.metadataAdapter.deleteByPathname(pathname);
 
-    const deleteAt = `${this.blobDataDir}${pathname}`;
+    const deleteAt = this.sanitizePath(pathname);
     const file = Bun.file(deleteAt);
 
     const fileExists = await file.exists();
