@@ -6,6 +6,7 @@ import { HTTPException } from "hono/http-exception";
 
 const TOKEN = Bun.env.BLOB_BUNNY_API_TOKEN;
 const DATA_DIR = Bun.env.BLOB_BUNNY_DATA_DIR;
+const MAX_FILE_SIZE = Bun.env.BLOB_BUNNY_MAX_FILE_SIZE;
 
 if (!TOKEN) {
   throw new Error("BLOB_BUNNY_API_TOKEN environment variable is not set");
@@ -15,8 +16,17 @@ if (!DATA_DIR) {
   throw new Error("BLOB_BUNNY_DATA_DIR environment variable is not set");
 }
 
+// Parse max file size with default of 100MB
+const maxFileSizeBytes = MAX_FILE_SIZE 
+  ? parseInt(MAX_FILE_SIZE, 10) 
+  : 104857600;
+
+if (isNaN(maxFileSizeBytes) || maxFileSizeBytes <= 0) {
+  throw new Error("BLOB_BUNNY_MAX_FILE_SIZE must be a positive number");
+}
+
 const metadataAdapter = new SQLiteMetadataAdapter("blobs.db");
-const blobService = new BlobService(metadataAdapter, DATA_DIR);
+const blobService = new BlobService(metadataAdapter, DATA_DIR, maxFileSizeBytes);
 
 const app = new Hono();
 

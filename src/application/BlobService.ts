@@ -9,12 +9,15 @@ export interface BlobUploadOptions {
 
 export class BlobService {
   private blobDataDir: string;
+  private maxFileSize: number;
 
   constructor(
     private metadataAdapter: MetadataAdapter,
     blobDataDir: string,
+    maxFileSize: number = 104857600, // Default 100MB
   ) {
     this.blobDataDir = resolve(blobDataDir);
+    this.maxFileSize = maxFileSize;
   }
 
   /**
@@ -117,6 +120,20 @@ export class BlobService {
 
   async upload(options: BlobUploadOptions): Promise<void> {
     const { pathname, file } = options;
+
+    // Validate file size
+    if (file.size > this.maxFileSize) {
+      const formatBytes = (bytes: number): string => {
+        if (bytes < 1024) return `${bytes} bytes`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      };
+
+      throw new Error(
+        `File too large: ${formatBytes(file.size)} exceeds maximum allowed size of ${formatBytes(this.maxFileSize)}`,
+      );
+    }
+
     const writeTo = this.sanitizePath(pathname);
 
     console.log(`Saving file to ${writeTo}`);
