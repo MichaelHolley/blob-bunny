@@ -60,9 +60,7 @@ export class BlobService {
 
     // Block null bytes and control characters
     if (/[\x00-\x1F\x7F]/.test(cleaned)) {
-      throw new Error(
-        "Invalid path: null bytes and control characters are not allowed",
-      );
+      throw new Error("Invalid path: null bytes and control characters are not allowed");
     }
 
     // Validate allowed characters (alphanumeric, dash, underscore, dot, forward slash)
