@@ -1,6 +1,7 @@
 import { join, relative, resolve } from "path";
 import type { BlobMetadata } from "../domain/blob";
 import type { MetadataAdapter } from "../infrastructure/metadata/IMetadataAdapter";
+import { getDataDir, getMaxFileSize } from "../infrastructure/config";
 
 export interface BlobUploadOptions {
   pathname: string;
@@ -13,11 +14,9 @@ export class BlobService {
 
   constructor(
     private metadataAdapter: MetadataAdapter,
-    blobDataDir: string,
-    maxFileSize: number = 104857600, // Default 100MB
   ) {
-    this.blobDataDir = resolve(blobDataDir);
-    this.maxFileSize = maxFileSize;
+    this.blobDataDir = getDataDir();
+    this.maxFileSize = getMaxFileSize();
   }
 
   /**
