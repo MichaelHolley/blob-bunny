@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { BlobService } from "./application/BlobService";
 import { SQLiteMetadataAdapter } from "./infrastructure/metadata/SQLiteMetadataAdapter";
+import { HTTPException } from "hono/http-exception";
 
 const TOKEN = Bun.env.BLOB_BUNNY_API_TOKEN;
 const DATA_DIR = Bun.env.BLOB_BUNNY_DATA_DIR;
@@ -20,6 +21,15 @@ const blobService = new BlobService(metadataAdapter, DATA_DIR);
 const app = new Hono();
 
 app.use("*", bearerAuth({ token: TOKEN }));
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return c.json({ message: err.message }, err.status);
+  }
+
+  console.error(err);
+  return c.json({ message: err.message }, 400);
+});
 
 // List all blobs
 app.get("/api/blobs", async (c) => {
