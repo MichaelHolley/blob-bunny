@@ -47,11 +47,22 @@ app.get("/*", async (c) => {
     return c.text("Not found", 404);
   }
 
+  const etag = `W/"${result.metadata.size}-${result.metadata.uploadedAt.getTime()}"`;
+
+  if (c.req.header("If-None-Match") === etag) {
+    return c.body(null, 304, {
+      ETag: etag,
+      "Cache-Control": "public, max-age=3600",
+    });
+  }
+
   return new Response(result.file, {
     status: 200,
     headers: {
       "Content-Type": result.metadata.contentType,
       "Content-Length": result.metadata.size.toString(),
+      ETag: etag,
+      "Cache-Control": "public, max-age=3600",
     },
   });
 });
