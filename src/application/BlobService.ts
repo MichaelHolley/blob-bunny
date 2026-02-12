@@ -1,4 +1,5 @@
 import { join, relative, resolve } from "path";
+import { fileTypeFromBuffer } from "file-type";
 import type { BlobMetadata } from "../domain/blob";
 import type { MetadataAdapter } from "../infrastructure/metadata/IMetadataAdapter";
 import { getDataDir, getMaxFileSize } from "../infrastructure/config";
@@ -125,12 +126,21 @@ export class BlobService {
 
     const writeTo = this.sanitizePath(pathname);
 
-    console.log(`Saving file to ${writeTo}`);
-    await Bun.write(writeTo, file);
+    // Convert file to ArrayBuffer for MIME type detection
+    const fileBuffer = await file.arrayBuffer();
+
+    // Perform server-side MIME type sniffing from magic bytes
+    const detectedType = await fileTypeFromBuffer(fileBuffer);
+    const contentType = detectedType?.mime || "application/octet-stream";
+
+    console.log(`Saving file to ${writeTo} (detected file-type ${contentType})`);
+
+    // Write the file buffer to disk
+    await Bun.write(writeTo, fileBuffer);
 
     await this.metadataAdapter.save({
       pathname,
-      contentType: file.type,
+      contentType,
       size: file.size,
     });
   }

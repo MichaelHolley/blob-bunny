@@ -12,6 +12,7 @@
     "fmt:check": "oxfmt --check"
   },
   "dependencies": {
+    "file-type": "^21.3.0",
     "hono": "^4.11.5"
   },
   "devDependencies": {
