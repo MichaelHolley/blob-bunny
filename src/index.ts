@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import { logger } from "hono/logger";
 import { BlobService } from "./application/BlobService";
 import { SQLiteMetadataAdapter } from "./infrastructure/metadata/SQLiteMetadataAdapter";
 import { HTTPException } from "hono/http-exception";
@@ -10,15 +11,29 @@ const blobService = new BlobService(metadataAdapter);
 
 const app = new Hono();
 
+// Log every request: method, path, status, and duration.
+app.use("*", logger());
+
 app.use("*", bearerAuth({ token: getApiToken() }));
 
 app.onError((err, c) => {
-  if (err instanceof HTTPException) {
-    return c.json({ message: err.message }, err.status);
+  const isHttpException = err instanceof HTTPException;
+  const status = isHttpException ? err.status : 400;
+
+  // HTTPExceptions thrown by middleware (e.g. bearerAuth's 401) often carry an
+  // empty message, which previously produced an unhelpful `{"message":""}`.
+  const message = err.message || `Request failed with status ${status}`;
+
+  const where = `${c.req.method} ${c.req.path} -> ${status}: ${message}`;
+  // Expected client errors (auth, validation) get a one-liner; anything
+  // unexpected gets the full stack for debugging.
+  if (isHttpException) {
+    console.warn(where);
+  } else {
+    console.error(where, err);
   }
 
-  console.error(err);
-  return c.json({ message: err.message }, 400);
+  return c.json({ message }, status);
 });
 
 // List all blobs
