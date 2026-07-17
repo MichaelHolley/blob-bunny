@@ -43,5 +43,11 @@ export function getApiToken(): string {
   if (!token) {
     throw new Error("BLOB_BUNNY_API_TOKEN environment variable is not set");
   }
+  // Must match the charset Hono's bearerAuth accepts, else every request 400s.
+  if (!/^[A-Za-z0-9._~+/-]+=*$/.test(token)) {
+    throw new Error(
+      "BLOB_BUNNY_API_TOKEN contains characters rejected by bearer auth; use only A-Z a-z 0-9 . _ ~ + / - (= as trailing padding)",
+    );
+  }
   return token;
 }
