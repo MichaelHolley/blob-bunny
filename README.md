@@ -23,10 +23,10 @@ This project was created using `bun init` in bun v1.3.6. [Bun](https://bun.com) 
 ```yaml
 services:
   blob-bunny:
-    image: michaelholley/blob-bunny:latest
+    image: mpholley/blob-bunny:latest
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5000:3000"
     environment:
       BLOB_BUNNY_API_TOKEN: your_api_token
       BLOB_BUNNY_DATA_DIR: /data/blob-data
