@@ -1,0 +1,29 @@
+# dependencies (installed inside the image)
+node_modules
+
+# build output
+dist
+out
+*.tgz
+
+# local data / runtime state
+blobs.db
+blob-data/
+blob-data
+
+# env & secrets
+.env
+.env.*.local
+
+# tooling / editor
+.git
+.github
+.vscode
+.idea
+.DS_Store
+bruno
+test-data
+
+# docs
+README.md
+AGENTS.md

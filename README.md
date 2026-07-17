@@ -18,6 +18,27 @@ bun run index.ts
 
 This project was created using `bun init` in bun v1.3.6. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
 
+## docker
+
+```yaml
+services:
+  blob-bunny:
+    image: michaelholley/blob-bunny:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      BLOB_BUNNY_API_TOKEN: your_api_token
+      BLOB_BUNNY_DATA_DIR: /data/blob-data
+      BLOB_BUNNY_MAX_FILE_SIZE: "104857600"
+      PORT: "3000"
+    volumes:
+      - blob-data:/data
+
+volumes:
+  blob-data:
+```
+
 ## endpoints
 
 All endpoints require a `Authorization: Bearer <token>` header.
