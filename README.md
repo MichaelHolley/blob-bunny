@@ -1,6 +1,6 @@
 # blob-bunny
 
-A simplistic blob-storage solution built with native bun features.
+A simplistic http blob-storage solution built with native bun features.
 
 ## setup
 
