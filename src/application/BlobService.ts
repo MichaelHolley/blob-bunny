@@ -65,7 +65,7 @@ export class BlobService {
     }
 
     // Validate allowed characters (alphanumeric, dash, underscore, dot, forward slash)
-    const allowedCharsRegex = /^[a-zA-Z0-9._\-\/]+$/;
+    const allowedCharsRegex = /^[a-zA-Z0-9._\-/]+$/;
     if (!allowedCharsRegex.test(cleaned)) {
       throw new Error(
         "Invalid path: only alphanumeric characters, dash, underscore, dot, and forward slash are allowed",

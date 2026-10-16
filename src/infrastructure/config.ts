@@ -20,11 +20,9 @@ export function getDataDir(): string {
  */
 export function getMaxFileSize(): number {
   const maxFileSize = Bun.env.BLOB_BUNNY_MAX_FILE_SIZE;
-  
+
   // Parse max file size with default of 100MB
-  const maxFileSizeBytes = maxFileSize 
-    ? parseInt(maxFileSize, 10) 
-    : 104857600;
+  const maxFileSizeBytes = maxFileSize ? parseInt(maxFileSize, 10) : 104857600;
 
   if (isNaN(maxFileSizeBytes) || maxFileSizeBytes <= 0) {
     throw new Error("BLOB_BUNNY_MAX_FILE_SIZE must be a positive number");

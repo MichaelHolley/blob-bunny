@@ -43,9 +43,9 @@ volumes:
 
 All endpoints require a `Authorization: Bearer <token>` header.
 
-| Method | Path | Operation | Params |
-| --- | --- | --- | --- |
-| `GET` | `/api/blobs` | List all blob metadata | None |
-| `POST` | `/*` | Upload a blob to the request path | Body: `multipart/form-data` with a `file` field |
-| `GET` | `/*` | Download the blob at the request path | Optional header: `If-None-Match` (ETag for conditional requests) |
-| `DELETE` | `/*` | Delete the blob at the request path | None |
+| Method   | Path         | Operation                             | Params                                                           |
+| -------- | ------------ | ------------------------------------- | ---------------------------------------------------------------- |
+| `GET`    | `/api/blobs` | List all blob metadata                | None                                                             |
+| `POST`   | `/*`         | Upload a blob to the request path     | Body: `multipart/form-data` with a `file` field                  |
+| `GET`    | `/*`         | Download the blob at the request path | Optional header: `If-None-Match` (ETag for conditional requests) |
+| `DELETE` | `/*`         | Delete the blob at the request path   | None                                                             |
